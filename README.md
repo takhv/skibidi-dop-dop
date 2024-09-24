@@ -31,7 +31,7 @@
 ## Технико-экономические показатели
 
  - [Flash-память для 20 (двадцати) секундного трека](https://www.chipdip.ru/product/w25q32jvssiq) - 54 рубля
- - [Микроконтроллер с поддержкой SPI, UART и ШИМ](https://www.chipdip.ru/product0/8026989953) - 38 рублей
+ - [Микроконтроллер с поддержкой SPI, UART и ШИМ](https://www.chipdip.ru/product0/8016772393) - 47 рублей
  - [Динамик](https://www.chipdip.ru/product0/8031024898) - 18 рублей
  - [Сервопривод](https://www.ozon.ru/product/servoprivod-servomotor-sg-90-360-gradusov-9g-arduino-1574661606/?asb2=wDt9T_jkdWd4z83JwZONb0wokMBvGMnvHYeOZoPjcqMjCJL0lDIqwhGUU4wTg79n&avtc=1&avte=2&avts=1727030776&keywords=%D1%81%D0%B5%D1%80%D0%B2%D0%BE%D0%BF%D1%80%D0%B8%D0%B2%D0%BE%D0%B4) - 170 рублей
  - [Моторчик](https://www.chipdip.ru/product0/8008724455) - 120 рублей
