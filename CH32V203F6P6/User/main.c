@@ -2,7 +2,7 @@
  * File Name          : main.c
  * Author             : Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel
  * Version            : V1.0.0
- * Date               : 27.10.2024
+ * Date               : 23.11.2024
  * Description        : Main program body.
  *********************************************************************************
  * Copyright (c) Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel.
@@ -16,34 +16,10 @@
 /* Global define */
 
 /* Global Variable */
-void setTimer()
-{
-    RCC->APB2PCENR |= RCC_IOPAEN;
-    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
-    GPIOA->CFGLR &= ~(0b100);
-    GPIOA->CFGLR |= (0b01)|(0b10<<2);
-
-    RCC->APB1PCENR |= RCC_TIM2EN;
-    while((RCC->APB1PCENR & RCC_TIM2EN) != RCC_TIM2EN);
-    TIM2->CHCTLR1 = (0b110<<4);
-    TIM2->PSC = 1-1;
-    TIM2->ATRLR = 256;
-    TIM2->CH1CVR = 64;
-    TIM2->CCER |= 1;
-    TIM2->CTLR1 |= TIM_CEN;
-
-    RCC->APB1PCENR |= RCC_TIM3EN;
-    while((RCC->APB1PCENR & RCC_TIM3EN) != RCC_TIM3EN);
-    TIM3->PSC = 545-1; // PSC 544 + 96CC1/441ATRLR
-    TIM3->ATRLR = 1;
-    TIM3->CTLR1 |= TIM_URS;
-    TIM3->DMAINTENR |= TIM_UIE;
-    TIM3->CTLR1 |= TIM_CEN;
-}
 
 void setUart()
 {
-    RCC->APB2PCENR |= RCC_IOPAEN;
+    RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
     while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
     GPIOA->CFGLR &= ~(1<<14);
     GPIOA->CFGLR |= 1<<15;
@@ -53,26 +29,54 @@ void setUart()
     USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RXNEIE | USART_CTLR1_RE;
 }
 
-uint8_t audio[5000];
-uint16_t audio_ptr = 0;
-uint16_t cur_audio = 0;
+enum Command
+{
+    NONE,
+    READ,
+    SEND
+} command;
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
     if(USART2->STATR & USART_STATR_RXNE)
     {
-        audio[audio_ptr++] = USART2->DATAR;
-        audio_ptr %= 5000;
+        uint8_t data = USART2->DATAR;
+        switch(command)
+        {
+        case NONE:
+            if(data == 0x69)
+                command = READ;
+            else if (data == 0x96)
+                command = SEND;
+            else if (data == 0x05)
+                GPIOA->BSHR = GPIO_BSHR_BR4;
+            else if (data == 0x50)
+                GPIOA->BSHR = GPIO_BSHR_BS4;
+            break;
+        case SEND:
+            SPI1->DATAR = data;
+            break;
+        case READ:
+            SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
+            SPI1->DATAR = 0;
+            break;
+        }
     }
 }
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
-void TIM3_IRQHandler(void)
+void SPI1_IRQHandler(void)
 {
-    TIM2->CH1CVR = audio[cur_audio++];
-    cur_audio %= 5000;
-    TIM3->INTFR &= ~1;
+    if((SPI1->STATR & SPI_STATR_TXE) && command == SEND)
+    {
+        command = NONE;
+    }
+    if((SPI1->STATR & SPI_STATR_RXNE) && command == READ)
+    {
+        USART2->DATAR = SPI1->DATAR;
+        command = NONE;
+    }
 }
 
 void setClock()
@@ -86,6 +90,31 @@ void setClock()
     while((RCC->CFGR0 & (2)) != (2));
 }
 
+void setSPI()
+{
+    RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
+    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0; //PA4 out 10MHz
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF5;
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE5_0;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF5_1;//SCK alternate push-pull output
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF6;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF6_1;//MISO alternate pull-up input
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF7;
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE7_0;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF7_1;//MOSI alternate push-pull output
+
+    RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
+
+    SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM;
+    SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+    SPI1->CTLR1 |= SPI_CTLR1_SPE;
+}
+
 /*********************************************************************
  * @fn      main
  *
@@ -95,11 +124,13 @@ void setClock()
  */
 int main(void)
 {
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
     NVIC_EnableIRQ(USART2_IRQn);
-    NVIC_EnableIRQ(TIM3_IRQn);
+    NVIC_EnableIRQ(SPI1_IRQn);
     setClock();
-    setTimer();
     setUart();
+    setSPI();
+    GPIOA->BSHR = GPIO_BSHR_BS4;
     while(1)
     {
     }
