@@ -1,0 +1,3 @@
+[submodule "libs/spi-flash"]
+	path = libs/spi-flash
+	url = https://github.com/maudeve-it/W25Qxxx_SPI_FLASH_STM32.git
