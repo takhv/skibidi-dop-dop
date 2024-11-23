@@ -4870,8 +4870,6 @@ with 00h to 64 bytes, otherwise the short packet is filled with 60 bytes of 0, a
 #define  RB_ETH_MIREGADR_MIRDL  0x1f                                            /* RW PHY register address */
 
 
-#include "ch32v20x_conf.h"
-
 #ifdef __cplusplus
 }
 #endif

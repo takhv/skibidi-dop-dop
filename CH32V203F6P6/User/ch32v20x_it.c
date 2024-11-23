@@ -1,15 +1,14 @@
 /********************************** (C) COPYRIGHT *******************************
- * File Name          : ch32v20x_it.c
- * Author             : WCH
+ * File Name          : main.c
+ * Author             : Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel
  * Version            : V1.0.0
- * Date               : 2023/12/29
- * Description        : Main Interrupt Service Routines.
-*********************************************************************************
-* Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
-* Attention: This software (modified or not) and binary are used for 
-* microcontroller manufactured by Nanjing Qinheng Microelectronics.
-*******************************************************************************/
-#include "ch32v20x_it.h"
+ * Date               : 27.10.2024
+ * Description        : Main program body.
+ *********************************************************************************
+ * Copyright (c) Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel.
+ * Attention: This software (modified or not) and binary are used for
+ * microcontroller ch32
+ *******************************************************************************/
 
 void NMI_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));

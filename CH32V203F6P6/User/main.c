@@ -1,24 +1,15 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : main.c
- * Author             : WCH
+ * Author             : Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel
  * Version            : V1.0.0
- * Date               : 2021/06/06
+ * Date               : 27.10.2024
  * Description        : Main program body.
  *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
+ * Copyright (c) Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel.
  * Attention: This software (modified or not) and binary are used for 
- * microcontroller manufactured by Nanjing Qinheng Microelectronics.
+ * microcontroller ch32
  *******************************************************************************/
 
-/*
- *@Note
- *USART Print debugging routine:
- *USART1_Tx(PA9).
- *This example demonstrates using USART1(PA9) as a print debug port output.
- *
- */
-
-#include "debug.h"
 #include "ch32v20x.h"
 /* Global typedef */
 
@@ -37,13 +28,13 @@ void setTimer()
     TIM2->CHCTLR1 = (0b110<<4);
     TIM2->PSC = 1-1;
     TIM2->ATRLR = 256;
-    TIM2->CH1CVR = 0;
+    TIM2->CH1CVR = 64;
     TIM2->CCER |= 1;
     TIM2->CTLR1 |= TIM_CEN;
 
     RCC->APB1PCENR |= RCC_TIM3EN;
     while((RCC->APB1PCENR & RCC_TIM3EN) != RCC_TIM3EN);
-    TIM3->PSC = 545-1;
+    TIM3->PSC = 545-1; // PSC 544 + 96CC1/441ATRLR
     TIM3->ATRLR = 1;
     TIM3->CTLR1 |= TIM_URS;
     TIM3->DMAINTENR |= TIM_UIE;
@@ -104,19 +95,11 @@ void setClock()
  */
 int main(void)
 {
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
     NVIC_EnableIRQ(USART2_IRQn);
     NVIC_EnableIRQ(TIM3_IRQn);
-    Delay_Init();
-//    USART_Printf_Init(115200);
     setClock();
     setTimer();
     setUart();
-    SystemCoreClockUpdate();
-//    printf("SystemClk:%d\r\n", SystemCoreClock);
-//    printf( "ChipID:%08x\r\n", DBGMCU_GetCHIPID() );
-//    printf("This is printf example\r\n");
-
     while(1)
     {
     }
