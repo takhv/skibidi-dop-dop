@@ -39,44 +39,7 @@ enum Command
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
-    if(USART2->STATR & USART_STATR_RXNE)
-    {
-        uint8_t data = USART2->DATAR;
-        switch(command)
-        {
-        case NONE:
-            if(data == 0x69)
-                command = READ;
-            else if (data == 0x96)
-                command = SEND;
-            else if (data == 0x05)
-                GPIOA->BSHR = GPIO_BSHR_BR4;
-            else if (data == 0x50)
-                GPIOA->BSHR = GPIO_BSHR_BS4;
-            break;
-        case SEND:
-            SPI1->DATAR = data;
-            break;
-        case READ:
-            SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
-            SPI1->DATAR = 0;
-            break;
-        }
-    }
-}
-
-__attribute__((interrupt("WCH-Interrupt-fast")))
-void SPI1_IRQHandler(void)
-{
-    if((SPI1->STATR & SPI_STATR_TXE) && command == SEND)
-    {
-        command = NONE;
-    }
-    if((SPI1->STATR & SPI_STATR_RXNE) && command == READ)
-    {
-        USART2->DATAR = SPI1->DATAR;
-        command = NONE;
-    }
+    (void)USART2->DATAR;
 }
 
 void setClock()
