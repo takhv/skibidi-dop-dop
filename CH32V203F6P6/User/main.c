@@ -108,7 +108,7 @@ void setSPI()
     GPIOA->CFGLR |= GPIO_CFGLR_MODE7_0;
     GPIOA->CFGLR |= GPIO_CFGLR_CNF7_1;//MOSI alternate push-pull output
 
-    RCC->APB2PCENR |= RCC_APB2Periph_SPI1;
+    RCC->APB2PCENR |= RCC_SPI1EN;
 
     SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM;
     SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
@@ -124,7 +124,6 @@ void setSPI()
  */
 int main(void)
 {
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
     NVIC_EnableIRQ(USART2_IRQn);
     NVIC_EnableIRQ(SPI1_IRQn);
     setClock();
