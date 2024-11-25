@@ -1856,7 +1856,7 @@
 		(uuid "11174127-b2a7-4e1b-b835-1a47302f6710")
 	)
 	(junction
-		(at 124.46 118.11)
+		(at 124.46 132.08)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "4a703d62-5273-4fe4-b48e-31dccd0cca57")
@@ -1880,7 +1880,7 @@
 		(uuid "6f07f6dc-60cf-4943-8ce0-7a5361366080")
 	)
 	(junction
-		(at 137.16 121.92)
+		(at 137.16 135.89)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "99dce071-c7c6-4918-9e77-6d3d42783e4e")
@@ -1941,7 +1941,7 @@
 	)
 	(wire
 		(pts
-			(xy 137.16 121.92) (xy 144.78 121.92)
+			(xy 137.16 135.89) (xy 144.78 135.89)
 		)
 		(stroke
 			(width 0)
@@ -1991,7 +1991,7 @@
 	)
 	(wire
 		(pts
-			(xy 91.44 76.2) (xy 91.44 118.11)
+			(xy 91.44 76.2) (xy 91.44 132.08)
 		)
 		(stroke
 			(width 0)
@@ -2051,7 +2051,7 @@
 	)
 	(wire
 		(pts
-			(xy 88.9 78.74) (xy 88.9 121.92)
+			(xy 88.9 78.74) (xy 88.9 135.89)
 		)
 		(stroke
 			(width 0)
@@ -2081,7 +2081,7 @@
 	)
 	(wire
 		(pts
-			(xy 137.16 111.76) (xy 137.16 114.3)
+			(xy 137.16 125.73) (xy 137.16 128.27)
 		)
 		(stroke
 			(width 0)
@@ -2191,7 +2191,7 @@
 	)
 	(wire
 		(pts
-			(xy 88.9 121.92) (xy 137.16 121.92)
+			(xy 88.9 135.89) (xy 137.16 135.89)
 		)
 		(stroke
 			(width 0)
@@ -2271,7 +2271,7 @@
 	)
 	(wire
 		(pts
-			(xy 124.46 107.95) (xy 124.46 110.49)
+			(xy 124.46 121.92) (xy 124.46 124.46)
 		)
 		(stroke
 			(width 0)
@@ -2421,7 +2421,7 @@
 	)
 	(wire
 		(pts
-			(xy 124.46 118.11) (xy 125.73 118.11)
+			(xy 124.46 132.08) (xy 125.73 132.08)
 		)
 		(stroke
 			(width 0)
@@ -2571,7 +2571,7 @@
 	)
 	(wire
 		(pts
-			(xy 91.44 118.11) (xy 124.46 118.11)
+			(xy 91.44 132.08) (xy 124.46 132.08)
 		)
 		(stroke
 			(width 0)
@@ -2679,6 +2679,66 @@
 		)
 		(uuid "fc7c246d-6aae-4137-85c4-2958bf9446de")
 	)
+	(text "+ сервопривод головы\n"
+		(exclude_from_sim no)
+		(at 132.08 107.188 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "00e0e53d-2f57-42be-89c5-4b27343f9dbd")
+	)
+	(text "Мотор"
+		(exclude_from_sim no)
+		(at 124.714 98.806 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "29e1ed28-4848-4db7-b0be-f53ecd77e9e4")
+	)
+	(text "- сервопривод головы"
+		(exclude_from_sim no)
+		(at 132.08 109.728 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "30413b96-7052-4050-ba51-b667b08b247f")
+	)
+	(text "Потенциометр2"
+		(exclude_from_sim no)
+		(at 128.27 104.394 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "7b78eda6-9789-494f-a007-fda13be7690f")
+	)
+	(text "+ сервопривод управления"
+		(exclude_from_sim no)
+		(at 133.858 112.268 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "7fef2a62-78cc-4ce4-89a9-d2ddfdd9b1e0")
+	)
+	(text "Потенциометр1\n"
+		(exclude_from_sim no)
+		(at 129.032 101.854 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "cb5402e8-fc09-4836-9d71-6bfbcbfe2a41")
+	)
 	(global_label "VCC"
 		(shape output)
 		(at 198.12 106.68 0)
@@ -2747,7 +2807,7 @@
 	)
 	(global_label "SWCLK"
 		(shape input)
-		(at 144.78 121.92 0)
+		(at 144.78 135.89 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -2757,7 +2817,7 @@
 		)
 		(uuid "25d7cf9b-20e7-41b3-be46-fbd1984e8aeb")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 153.9942 121.92 0)
+			(at 153.9942 135.89 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2813,7 +2873,7 @@
 	)
 	(global_label "VCC"
 		(shape input)
-		(at 137.16 111.76 0)
+		(at 137.16 125.73 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -2823,7 +2883,7 @@
 		)
 		(uuid "4511e86c-34d3-4db2-8002-813ec5bcbb83")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 143.7738 111.76 0)
+			(at 143.7738 125.73 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2945,7 +3005,7 @@
 	)
 	(global_label "SWDIO"
 		(shape input)
-		(at 125.73 118.11 0)
+		(at 125.73 132.08 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -2955,7 +3015,7 @@
 		)
 		(uuid "6deb01d1-8f17-4910-9354-0504259afef1")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 134.5814 118.11 0)
+			(at 134.5814 132.08 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3165,7 +3225,7 @@
 	)
 	(global_label "VCC"
 		(shape input)
-		(at 124.46 107.95 0)
+		(at 124.46 121.92 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -3175,7 +3235,7 @@
 		)
 		(uuid "dc7ed3a4-dcff-4fff-85b4-b550adddb665")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 131.0738 107.95 0)
+			(at 131.0738 121.92 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4025,7 +4085,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 124.46 114.3 0)
+		(at 124.46 128.27 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4034,7 +4094,7 @@
 		(fields_autoplaced yes)
 		(uuid "91b0fac5-84b0-4b12-95d3-0924ca5d5f17")
 		(property "Reference" "R6"
-			(at 127 113.0299 0)
+			(at 127 126.9999 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4043,7 +4103,7 @@
 			)
 		)
 		(property "Value" "10kOhm"
-			(at 127 115.5699 0)
+			(at 127 129.5399 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4052,7 +4112,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 122.682 114.3 90)
+			(at 122.682 128.27 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4061,7 +4121,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 124.46 114.3 0)
+			(at 124.46 128.27 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4070,7 +4130,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 124.46 114.3 0)
+			(at 124.46 128.27 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4923,7 +4983,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 137.16 118.11 0)
+		(at 137.16 132.08 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -4932,7 +4992,7 @@
 		(fields_autoplaced yes)
 		(uuid "f8aa8aa6-0a37-462c-816d-fc2cda240fbb")
 		(property "Reference" "R3"
-			(at 139.7 116.8399 0)
+			(at 139.7 130.8099 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4941,7 +5001,7 @@
 			)
 		)
 		(property "Value" "10kOhm"
-			(at 139.7 119.3799 0)
+			(at 139.7 133.3499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4950,7 +5010,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 135.382 118.11 90)
+			(at 135.382 132.08 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4959,7 +5019,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 137.16 118.11 0)
+			(at 137.16 132.08 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4968,7 +5028,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 137.16 118.11 0)
+			(at 137.16 132.08 0)
 			(effects
 				(font
 					(size 1.27 1.27)
