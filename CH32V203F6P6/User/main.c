@@ -57,8 +57,9 @@ void setSPI()
 {
     RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
     while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0; //PA4 out 10MHz
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0 | GPIO_CFGLR_MODE4_1; //PA4 out 50MHz
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
+    GPIOA->BSHR = GPIO_BSHR_BS4;
 
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF5;
     GPIOA->CFGLR |= GPIO_CFGLR_MODE5_0;
@@ -73,7 +74,7 @@ void setSPI()
 
     RCC->APB2PCENR |= RCC_SPI1EN;
 
-    SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM;
+    SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM | SPI_CTLR1_SSI;
     SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
     SPI1->CTLR1 |= SPI_CTLR1_SPE;
 }
@@ -92,7 +93,6 @@ int main(void)
     setClock();
     setUart();
     setSPI();
-    GPIOA->BSHR = GPIO_BSHR_BS4;
     while(1)
     {
     }

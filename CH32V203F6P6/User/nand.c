@@ -22,11 +22,14 @@ enum State {
 enum State state;
 
 void NAND_Error_Handler(void){
-
+    SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
+    SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+    state = ENABLE_RESET;
+    GPIOA->BSHR = GPIO_BSHR_BS4;
 }
 
 #define BUFFER_SIZE 1024
-uint32_t address;
+uint32_t address=0;
 uint8_t address_counter;
 uint16_t counter;
 uint8_t buffer[BUFFER_SIZE];
@@ -37,16 +40,15 @@ void SPI1_IRQHandler(void)
     switch (state)
     {
     case ENABLE_RESET:
-        if(SPI1->STATR & SPI_STATR_TXE)
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            SPI1->DATAR = ENABLE_RESET_COMMAND;
-            state = DEVICE_RESET;
-            SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             (void)SPI1->DATAR;
+            SPI1->DATAR = ENABLE_RESET_COMMAND;
+            SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
-        else if(SPI1->STATR & SPI_STATR_RXNE)
+        else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             (void)SPI1->DATAR;
             GPIOA->BSHR = GPIO_BSHR_BS4;
@@ -56,15 +58,15 @@ void SPI1_IRQHandler(void)
         }
         break;
     case DEVICE_RESET:
-        if(SPI1->STATR & SPI_STATR_TXE)
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
+            (void)SPI1->DATAR;
             SPI1->DATAR = RESET_DEVICE_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
-            (void)SPI1->DATAR;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
-        else if(SPI1->STATR & SPI_STATR_RXNE)
+        else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             (void)SPI1->DATAR;
             GPIOA->BSHR = GPIO_BSHR_BS4;
@@ -74,15 +76,15 @@ void SPI1_IRQHandler(void)
         }
         break;
     case SEND_READ_JEDEC:
-        if(SPI1->STATR & SPI_STATR_TXE)
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            SPI1->DATAR = JEDEC_ID_COMMAND;
             (void)SPI1->DATAR;
+            SPI1->DATAR = JEDEC_ID_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
-        else if(SPI1->STATR & SPI_STATR_RXNE)
+        else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             state = ACCEPT_JEDEC_ID;
             (void)SPI1->DATAR;
@@ -90,7 +92,7 @@ void SPI1_IRQHandler(void)
         }
         break;
     case ACCEPT_JEDEC_ID:
-        if(SPI1->STATR & SPI_STATR_RXNE)
+        if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             if(SPI1->DATAR != JEDEC_ID)
                 NAND_Error_Handler();
             else
@@ -100,7 +102,7 @@ void SPI1_IRQHandler(void)
             }
         break;
     case ACCEPT_ID1:
-        if(SPI1->STATR & SPI_STATR_RXNE)
+        if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             (void)SPI1->DATAR;
             SPI1->DATAR = 0xFF;
@@ -108,7 +110,7 @@ void SPI1_IRQHandler(void)
         }
         break;
     case ACCEPT_ID2:
-        if(SPI1->STATR & SPI_STATR_RXNE)
+        if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             (void)SPI1->DATAR;
             state = FREE;
@@ -118,7 +120,7 @@ void SPI1_IRQHandler(void)
         }
         break;
     case FREE:
-        if(SPI1->STATR & SPI_STATR_TXE)
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
             counter=0;
@@ -128,7 +130,7 @@ void SPI1_IRQHandler(void)
         }
         break;
     case SEND_ADDRESS:
-        if(SPI1->STATR & SPI_STATR_TXE)
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             SPI1->DATAR = (address>>(8*(address_counter++))) & 0xFF;
             if(address_counter == 3)
@@ -141,7 +143,7 @@ void SPI1_IRQHandler(void)
         }
         break;
     case READ_DATA:
-        if(SPI1->STATR & SPI_STATR_RXNE)
+        if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             buffer[counter++] = SPI1->DATAR;
             if(counter == BUFFER_SIZE)
