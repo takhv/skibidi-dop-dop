@@ -2721,6 +2721,12 @@
 		(uuid "a23d6d1e-6cd0-4947-9545-3594f913f03f")
 	)
 	(junction
+		(at 223.52 62.23)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a5b619fc-a71c-4f48-8f35-4820db666a25")
+	)
+	(junction
 		(at 170.18 90.17)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3059,6 +3065,16 @@
 			(type default)
 		)
 		(uuid "36bbe1e2-1ebe-4765-8c9b-8ec20388e756")
+	)
+	(wire
+		(pts
+			(xy 242.57 46.99) (xy 242.57 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3ddda02d-0c0e-42b9-9212-984b18cff4e7")
 	)
 	(wire
 		(pts
@@ -3529,6 +3545,16 @@
 			(type default)
 		)
 		(uuid "d307e732-54b8-4e8f-aa95-53bfc8240e96")
+	)
+	(wire
+		(pts
+			(xy 242.57 62.23) (xy 223.52 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d483345d-8cb4-4eb9-b69b-5079e49c445e")
 	)
 	(wire
 		(pts
@@ -5982,19 +6008,19 @@
 			(uuid "f48eaf50-a2b6-408c-b306-9c74476a96ae")
 		)
 		(pin "11"
-			(uuid "9ad77333-58e9-435d-bcae-4525780a82be")
+			(uuid "9ad77333-58e9-435d-bcae-4525780a82bf")
 		)
 		(pin "16"
 			(uuid "4a00985a-242a-41de-a996-219ce43136a9")
 		)
 		(pin "5"
-			(uuid "87cfd66e-408d-429b-8bb5-2731748720eb")
+			(uuid "87cfd66e-408d-429b-8bb5-2731748720ec")
 		)
 		(pin "9"
-			(uuid "041d16c2-128a-44f3-bb51-599981897f75")
+			(uuid "041d16c2-128a-44f3-bb51-599981897f76")
 		)
 		(pin "10"
-			(uuid "53db218b-cb9c-4bc6-81ec-9c1fcade8724")
+			(uuid "53db218b-cb9c-4bc6-81ec-9c1fcade8725")
 		)
 		(pin "1"
 			(uuid "4738f968-e773-41e0-ad72-60c4a49fae77")
@@ -6006,13 +6032,13 @@
 			(uuid "8211b120-98c3-47d4-820b-e047470ff0be")
 		)
 		(pin "7"
-			(uuid "920474c8-ade6-495d-9ab6-1fc9f39128fd")
+			(uuid "920474c8-ade6-495d-9ab6-1fc9f39128fe")
 		)
 		(pin "12"
-			(uuid "9c219508-6802-41a9-9027-15e4ed707677")
+			(uuid "9c219508-6802-41a9-9027-15e4ed707678")
 		)
 		(pin "8"
-			(uuid "cbbec10a-45bd-4837-adfe-d8a352463e98")
+			(uuid "cbbec10a-45bd-4837-adfe-d8a352463e99")
 		)
 		(pin "14"
 			(uuid "ce3c2195-65cc-446d-aa94-1c28adb8a3a2")
@@ -6024,7 +6050,7 @@
 			(uuid "920e9a83-b0aa-4b90-b794-3d73905a745b")
 		)
 		(pin "6"
-			(uuid "33909999-1aff-47fe-abde-c21a8d6e822e")
+			(uuid "33909999-1aff-47fe-abde-c21a8d6e822f")
 		)
 		(instances
 			(project "schema"
