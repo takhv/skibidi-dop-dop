@@ -20,13 +20,17 @@
 void setADC(void)
 {
     RCC->CFGR0 &= ~RCC_ADCPRE;
-    RCC->APB2PCENR |= RCC_ADC2EN;
-    while(!(RCC->APB2PCENR & RCC_ADC2EN));
-    ADC2->CTLR1 |= ADC_EOCIE | ADC_SCAN;
-    ADC2->CTLR2 |= ADC_ALIGN | ADC_CONT | ADC_JSWSTART;
-    ADC2->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // §á§â§Ú§Ö§Þ §Õ§Ñ§ß§ß§í§ç §ã §Õ§Ó§å§ç §Ü§Ñ§ß§Ñ§Ý§à§Ó: 1 §Ú 9 (PA1 §Ú PB1)
-
-    ADC2->CTLR2 |= ADC_ADON;
+    RCC->APB2PCENR |= RCC_ADC1EN | RCC_IOPAEN | RCC_IOPBEN;
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF1;
+    GPIOB->CFGLR &= ~GPIO_CFGLR_CNF1;
+    while(!(RCC->APB2PCENR & RCC_ADC1EN));
+    ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN;
+    ADC1->CTLR2 |= ADC_CONT | ADC_JAUTO;
+    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // §á§â§Ú§Ö§Þ §Õ§Ñ§ß§ß§í§ç §ã §Õ§Ó§å§ç §Ü§Ñ§ß§Ñ§Ý§à§Ó: 1 §Ú 9 (PA1 §Ú PB1)
+    ADC1->CTLR2 |= ADC_JSWSTART;
+    ADC1->CTLR2 |= ADC_ADON;
+    for(int i = 0;i<10000;i++);
+    ADC1->CTLR2 |= ADC_ADON;
 }
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
