@@ -55,14 +55,20 @@ uint32_t counter=0;
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void ADC1_2_IRQHandler(void)
 {
+    ADC1->RDATAR;
     uint16_t r1 = ADC1->IDATAR1;
     uint16_t r2 = ADC1->IDATAR2;
-    if(counter++ == 10000)
+    ADC1->STATR &= ~(ADC_EOC | ADC_JEOC);
+    counter++;
+    if(counter == 10000)
     {
-        USART2->DATAR = (r1>>8)&0xff;
+        USART2->DATAR = ((r1>>8)&0xff) | (1<<4);
+    }
+    else if(counter == 10001)
+    {
+        USART2->DATAR = ((r2>>8)&0xff) | (2<<4);
         counter=0;
     }
-
 }
 
 void setClock()
