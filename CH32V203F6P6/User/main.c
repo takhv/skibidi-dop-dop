@@ -24,8 +24,8 @@ void setADC(void)
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF1;
     GPIOB->CFGLR &= ~GPIO_CFGLR_CNF1;
     while(!(RCC->APB2PCENR & RCC_ADC1EN));
-    ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN;
-    ADC1->CTLR2 |= ADC_CONT | ADC_JAUTO;
+    ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN | ADC_JAUTO;
+    ADC1->CTLR2 |= ADC_CONT;
     ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // §á§â§Ú§Ö§Þ §Õ§Ñ§ß§ß§í§ç §ã §Õ§Ó§å§ç §Ü§Ñ§ß§Ñ§Ý§à§Ó: 1 §Ú 9 (PA1 §Ú PB1)
     ADC1->CTLR2 |= ADC_JSWSTART;
     ADC1->CTLR2 |= ADC_ADON;
@@ -33,11 +33,36 @@ void setADC(void)
     ADC1->CTLR2 |= ADC_ADON;
 }
 
+void setUart()
+{
+    RCC->APB2PCENR |= RCC_IOPAEN;
+    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF3;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF3_1; // §±§Ú§ß PA3 §Õ§Ý§ñ UART Rx
+
+    GPIOA->CFGLR |= ~GPIO_CFGLR_MODE2;
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE2_0;
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF2;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF2_1; // §±§Ú§ß PA2 §Õ§Ý§ñ UART Tx
+
+    RCC->APB1PCENR |= RCC_USART2EN;
+    USART2->BRR = 8000000/115200;
+    USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_TE;
+}
+
+uint32_t counter=0;
+
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void ADC1_2_IRQHandler(void)
 {
-    uint16_t r1 = ADC1->IDATAR3;
-    uint16_t r2 = ADC1->IDATAR4;
+    uint16_t r1 = ADC1->IDATAR1;
+    uint16_t r2 = ADC1->IDATAR2;
+    if(counter++ == 10000)
+    {
+        USART2->DATAR = (r1>>8)&0xff;
+        counter=0;
+    }
+
 }
 
 void setClock()
@@ -62,6 +87,7 @@ int main(void)
 {
 //    setClock();
     setADC();
+    setUart();
     NVIC_EnableIRQ(ADC1_2_IRQn);
     while(1)
     {
