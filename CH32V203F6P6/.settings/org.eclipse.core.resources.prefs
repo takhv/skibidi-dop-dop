@@ -6,5 +6,7 @@ encoding//Peripheral/inc/ch32v20x.h=UTF-8
 encoding//Startup/startup_ch32v20x_D6.S=GBK
 encoding//User/ch32v20x_it.c=GBK
 encoding//User/main.c=GBK
+encoding//User/nand.c=GBK
+encoding//User/nand.h=GBK
 encoding//User/system_ch32v20x.c=GBK
 encoding//User/system_ch32v20x.h=GBK

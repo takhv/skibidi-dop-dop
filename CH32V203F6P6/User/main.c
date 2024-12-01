@@ -11,6 +11,7 @@
  *******************************************************************************/
 
 #include "ch32v20x.h"
+#include "nand.h"
 /* Global typedef */
 
 /* Global define */
@@ -25,21 +26,62 @@ void setUart()
     GPIOA->CFGLR |= 1<<15;
 
     RCC->APB1PCENR |= RCC_USART2EN;
-    USART2->BRR = (2<<4)|(1<<3); // 600.000 baud
+    USART2->BRR = 24000000 / 115200;
     USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RXNEIE | USART_CTLR1_RE;
 }
 
-enum Command
-{
-    NONE,
-    READ,
-    SEND
-} command;
+static uint32_t counter = 0;
+
+extern enum W25_State w25_state;
+extern enum State state;
+extern uint8_t buffer[BUFFER_SIZE];
+extern uint32_t address;
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
-    (void)USART2->DATAR;
+    switch(counter)
+    {
+    case 0:
+        if(USART2->DATAR == 0xaa)
+        {
+            counter = 1;
+            USART2->DATAR = 0xaa;
+        }
+        if(USART2->DATAR == 0x87)
+            state = FREE;
+        break;
+    case 1:
+        if(USART2->DATAR == 0x69)
+        {
+            counter = 2;
+            SPI1->CTLR2 &= ~(SPI_CTLR2_RXNEIE | SPI_CTLR2_TXEIE);
+            w25_state = Write;
+            USART2->DATAR = 0x96;
+        }
+        else
+            counter = 0;
+        break;
+    case 2:
+        address = 0;
+    case 3:
+    case 4:
+        address |= (USART2->DATAR << ((2-(counter-2))*8));
+        counter++;
+        break;
+    default:
+        if(counter - 4 < PAGE_SIZE)
+        {
+            buffer[counter-4] = USART2->DATAR;
+            counter++;
+        }
+        else
+        {
+            counter=0;
+            SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+        }
+        break;
+    }
 }
 
 void setClock()

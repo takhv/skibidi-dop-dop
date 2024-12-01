@@ -1,41 +1,33 @@
 #include <ch32v20x.h>
+#include "nand.h"
 
 #define JEDEC_ID_COMMAND 0x9F
 #define READ_COMMAND 0x3
 #define ENABLE_RESET_COMMAND 0x66
 #define RESET_DEVICE_COMMAND 0x99
+#define WRITE_ENABLE_COMMAND 0x6
+#define PAGE_PROGRAM_COMMAND 0x2
+#define CHIP_ERASE_COMMAND   0xC7
 
 #define JEDEC_ID 0xEF
 
-enum State {
-    ENABLE_RESET,
-    DEVICE_RESET,
-    SEND_READ_JEDEC,
-    ACCEPT_JEDEC_ID,
-    ACCEPT_ID2,
-    ACCEPT_ID1,
-    FREE,
-    READ_DATA,
-    SEND_ADDRESS,
-    ACCEPT_DATA
-};
 enum State state;
 
-void NAND_Error_Handler(void){
+static void W25Q_Error_Handler(void){
     SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
     SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
     state = ENABLE_RESET;
     GPIOA->BSHR = GPIO_BSHR_BS4;
 }
 
-#define BUFFER_SIZE 1024
 uint32_t address=0;
-uint8_t address_counter;
-uint16_t counter;
+static uint8_t address_counter;
+static uint16_t counter;
 uint8_t buffer[BUFFER_SIZE];
 
-__attribute__((interrupt("WCH-Interrupt-fast")))
-void SPI1_IRQHandler(void)
+enum W25_State w25_state = Read;
+
+static void Reset_W25Q(void)
 {
     switch (state)
     {
@@ -94,7 +86,7 @@ void SPI1_IRQHandler(void)
     case ACCEPT_JEDEC_ID:
         if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             if(SPI1->DATAR != JEDEC_ID)
-                NAND_Error_Handler();
+                W25Q_Error_Handler();
             else
             {
                 state = ACCEPT_ID2;
@@ -118,6 +110,23 @@ void SPI1_IRQHandler(void)
             SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
             GPIOA->BSHR = GPIO_BSHR_BS4;
         }
+        break;
+    default:
+        W25Q_Error_Handler();
+    }
+}
+
+static void SPI_Reader(void)
+{
+    switch (state)
+    {
+    case ENABLE_RESET:
+    case DEVICE_RESET:
+    case SEND_READ_JEDEC:
+    case ACCEPT_JEDEC_ID:
+    case ACCEPT_ID1:
+    case ACCEPT_ID2:
+        Reset_W25Q();
         break;
     case FREE:
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
@@ -155,6 +164,128 @@ void SPI1_IRQHandler(void)
             else
                 SPI1->DATAR = 0xff;
         }
+        break;
+    default:
+        W25Q_Error_Handler();
+        break;
+    }
+}
+
+static void SPI_Writer(void)
+{
+    switch (state)
+    {
+    case ENABLE_RESET:
+    case DEVICE_RESET:
+    case SEND_READ_JEDEC:
+    case ACCEPT_JEDEC_ID:
+    case ACCEPT_ID1:
+    case ACCEPT_ID2:
+        Reset_W25Q();
+        break;
+    case FREE:
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
+        {
+            GPIOA->BSHR = GPIO_BSHR_BR4;
+            SPI1->DATAR = WRITE_ENABLE_COMMAND;
+            SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
+            SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
+        }
+        else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
+        {
+            state = SEND_WRITE_ENABLE;
+            (void)SPI1->DATAR;
+            GPIOA->BSHR = GPIO_BSHR_BS4;
+            SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
+            SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+        }
+        break;
+    case SEND_WRITE_ENABLE:
+        if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
+        {
+            GPIOA->BSHR = GPIO_BSHR_BR4;
+            SPI1->DATAR = CHIP_ERASE_COMMAND;
+            SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
+            SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
+        }
+        else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
+        {
+            state = ERASED;
+            (void)SPI1->DATAR;
+            GPIOA->BSHR = GPIO_BSHR_BS4;
+            SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
+            SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+            counter=0;
+        }
+        break;
+    case ERASED:
+        switch(counter)
+        {
+        case 0:
+            if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
+            {
+                GPIOA->BSHR = GPIO_BSHR_BR4;
+                SPI1->DATAR = PAGE_PROGRAM_COMMAND;
+                SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
+                SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
+            }
+            else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
+            {
+                state = ERASED;
+                (void)SPI1->DATAR;
+                SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
+                SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+                counter=1;
+                address_counter = 0;
+            }
+            break;
+        case 1:
+        case 2:
+        case 3:
+            if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
+            {
+                SPI1->DATAR = (address >> ((2-address_counter)*8))&0xff;
+                SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
+                SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
+            }
+            else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
+            {
+                state = ERASED;
+                (void)SPI1->DATAR;
+                SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
+                SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+                counter++;
+                address_counter++;
+            }
+            break;
+        case PAGE_SIZE+4:
+            SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
+            address += 256;
+            counter = 0;
+            address_counter = 0;
+            GPIOA->BSHR = GPIO_BSHR_BS4;
+            break;
+        default:
+            SPI1->DATAR = buffer[(counter++)-4];
+            break;
+        }
+        break;
+    default:
+        W25Q_Error_Handler();
+        break;
+    }
+}
+
+__attribute__((interrupt("WCH-Interrupt-fast")))
+void SPI1_IRQHandler(void)
+{
+    switch(w25_state)
+    {
+    case Read:
+        SPI_Reader();
+        break;
+    case Write:
+        SPI_Writer();
         break;
     }
 }
