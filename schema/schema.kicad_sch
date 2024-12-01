@@ -2958,10 +2958,10 @@
 		(uuid "11174127-b2a7-4e1b-b835-1a47302f6710")
 	)
 	(junction
-		(at 245.11 146.05)
+		(at 243.84 88.9)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "14ff0755-7818-4fe9-8ede-9e4101d36f7a")
+		(uuid "1ac1a9ad-8dbf-49ee-b021-a2b6b9d6ffd4")
 	)
 	(junction
 		(at 160.02 160.02)
@@ -2974,12 +2974,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "2806e210-af39-4bc1-9207-578e8c236e27")
-	)
-	(junction
-		(at 243.84 106.68)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "39522184-1276-4528-947e-13a15862afd6")
 	)
 	(junction
 		(at 172.72 142.24)
@@ -3040,6 +3034,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "a5b619fc-a71c-4f48-8f35-4820db666a25")
+	)
+	(junction
+		(at 245.11 128.27)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c78f89d3-cfdc-440c-b06e-4dcab9c2e4c5")
 	)
 	(junction
 		(at 243.84 109.22)
@@ -3469,6 +3469,16 @@
 	)
 	(wire
 		(pts
+			(xy 247.65 128.27) (xy 245.11 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "53238548-6235-48c2-9811-52cc7eeeeb47")
+	)
+	(wire
+		(pts
 			(xy 171.45 127) (xy 172.72 127)
 		)
 		(stroke
@@ -3486,6 +3496,16 @@
 			(type default)
 		)
 		(uuid "54d7dfd7-4fe8-4f94-8b67-3716d4b88653")
+	)
+	(wire
+		(pts
+			(xy 245.11 128.27) (xy 242.57 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "55296006-093f-4c26-8c60-e48bfdea52f9")
 	)
 	(wire
 		(pts
@@ -3629,6 +3649,16 @@
 	)
 	(wire
 		(pts
+			(xy 243.84 88.9) (xy 243.84 91.44)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "76320ac4-c3f8-471f-a0da-9cb57beb2299")
+	)
+	(wire
+		(pts
 			(xy 124.46 43.18) (xy 123.19 43.18)
 		)
 		(stroke
@@ -3636,6 +3666,16 @@
 			(type default)
 		)
 		(uuid "7639fa45-f91c-4db2-a7c8-3bfc65ada703")
+	)
+	(wire
+		(pts
+			(xy 243.84 88.9) (xy 242.57 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "78967ea5-e21c-48e7-9e8c-25e900bca104")
 	)
 	(wire
 		(pts
@@ -3676,6 +3716,16 @@
 			(type default)
 		)
 		(uuid "80f59ed5-0430-4ff3-ae99-4e8712000ea2")
+	)
+	(wire
+		(pts
+			(xy 245.11 128.27) (xy 245.11 130.81)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "871bf23d-ac00-46f5-8d99-430e9c1ee471")
 	)
 	(wire
 		(pts
@@ -3979,16 +4029,6 @@
 	)
 	(wire
 		(pts
-			(xy 243.84 91.44) (xy 243.84 106.68)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c71bb438-9a8f-4aaa-8905-36500a431db3")
-	)
-	(wire
-		(pts
 			(xy 114.3 110.49) (xy 115.57 110.49)
 		)
 		(stroke
@@ -4179,6 +4219,16 @@
 	)
 	(wire
 		(pts
+			(xy 246.38 88.9) (xy 243.84 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "df685507-a6ac-4145-a324-f9b1ee385d73")
+	)
+	(wire
+		(pts
 			(xy 48.26 29.21) (xy 30.48 29.21)
 		)
 		(stroke
@@ -4349,16 +4399,6 @@
 	)
 	(wire
 		(pts
-			(xy 245.11 130.81) (xy 245.11 146.05)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f5ea2efb-d24d-4670-a499-040ffae81ae4")
-	)
-	(wire
-		(pts
 			(xy 45.72 41.91) (xy 45.72 87.63)
 		)
 		(stroke
@@ -4437,7 +4477,7 @@
 		)
 		(uuid "fd3f23bb-2512-41d4-bff3-1c0b9aac1ff9")
 	)
-	(text "+ сервопривод головы\n"
+	(text "- сервопривод головы\n"
 		(exclude_from_sim no)
 		(at 122.682 80.264 0)
 		(effects
@@ -4447,7 +4487,7 @@
 		)
 		(uuid "00e0e53d-2f57-42be-89c5-4b27343f9dbd")
 	)
-	(text "- сервопривод головы"
+	(text "+ сервопривод головы"
 		(exclude_from_sim no)
 		(at 122.682 77.724 0)
 		(effects
@@ -4631,7 +4671,7 @@
 	)
 	(global_label "VCC_5V"
 		(shape input)
-		(at 242.57 128.27 0)
+		(at 247.65 128.27 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4641,7 +4681,7 @@
 		)
 		(uuid "345954c5-bf9b-4851-aa27-2905a844f51f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 252.4495 128.27 0)
+			(at 257.5295 128.27 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4763,7 +4803,7 @@
 	)
 	(global_label "VCC_5V"
 		(shape input)
-		(at 242.57 88.9 0)
+		(at 246.38 88.9 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4773,7 +4813,7 @@
 		)
 		(uuid "4c034840-cb3f-4fe5-a4e1-95bdf4838311")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 252.4495 88.9 0)
+			(at 256.2595 88.9 0)
 			(effects
 				(font
 					(size 1.27 1.27)
