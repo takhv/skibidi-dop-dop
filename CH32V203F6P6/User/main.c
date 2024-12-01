@@ -17,6 +17,17 @@
 
 /* Global Variable */
 
+void setGPIO(void)
+{
+    RCC->APB2PCENR |= RCC_IOPAEN | RCC_IOPDEN | RCC_AFIOEN;
+    GPIOA->CFGHR &= ~(GPIO_CFGHR_CNF11 | GPIO_CFGHR_CNF12);
+    GPIOA->CFGHR |= GPIO_CFGHR_MODE11_0 | GPIO_CFGHR_MODE12_0;
+
+    AFIO->PCFR1 |= AFIO_PCFR1_PD01_REMAP;
+    GPIOD->CFGLR &= ~(GPIO_CFGLR_CNF0 | GPIO_CFGLR_CNF1);
+    GPIOD->CFGLR |= GPIO_CFGLR_MODE0_0 | GPIO_CFGLR_MODE1_0;
+}
+
 void setADC(void)
 {
     RCC->CFGR0 &= ~RCC_ADCPRE;
@@ -47,27 +58,62 @@ void setUart()
 
     RCC->APB1PCENR |= RCC_USART2EN;
     USART2->BRR = 8000000/115200;
-    USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_TE;
+    USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RE | USART_CTLR1_RXNEIE;
 }
 
-uint32_t counter=0;
+int16_t potentialForHead = 0;
+int16_t potentialForRotation = 0;
+#define ADC_MAX (0xfff)
+
+void updateHeadServo(int16_t potential)
+{
+    if((ADC_MAX - potential) + potentialForHead < potential - potentialForHead)
+    {
+        GPIOA->BSHR = GPIO_BSHR_BR11;
+        GPIOA->BSHR = GPIO_BSHR_BS12;
+    }
+    else
+    {
+        GPIOA->BSHR = GPIO_BSHR_BR12;
+        GPIOA->BSHR = GPIO_BSHR_BS11;
+    }
+}
+
+void updateRotationServo(int16_t potential)
+{
+    if((ADC_MAX - potential) + potentialForRotation < potential - potentialForRotation)
+    {
+        GPIOD->BSHR = GPIO_BSHR_BR1;
+        GPIOD->BSHR = GPIO_BSHR_BS0;
+    }
+    else
+    {
+        GPIOD->BSHR = GPIO_BSHR_BR0;
+        GPIOD->BSHR = GPIO_BSHR_BS1;
+    }
+}
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void ADC1_2_IRQHandler(void)
 {
     ADC1->RDATAR;
-    uint16_t r1 = ADC1->IDATAR1;
-    uint16_t r2 = ADC1->IDATAR2;
+    int16_t r1 = ADC1->IDATAR1;
+    int16_t r2 = ADC1->IDATAR2;
     ADC1->STATR &= ~(ADC_EOC | ADC_JEOC);
-    counter++;
-    if(counter == 10000)
+    updateHeadServo(r1);
+    updateRotationServo(r2);
+}
+
+__attribute__((interrupt("WCH-Interrupt-fast")))
+void USART2_IRQHandler(void)
+{
+    if(USART2->STATR & USART_STATR_RXNE)
     {
-        USART2->DATAR = ((r1>>8)&0xff) | (1<<4);
-    }
-    else if(counter == 10001)
-    {
-        USART2->DATAR = ((r2>>8)&0xff) | (2<<4);
-        counter=0;
+        uint8_t data = USART2->DATAR;
+        if(data & 0x80)
+            potentialForRotation = (data&0x7f)<<(4+1);
+        else
+            potentialForHead = (data&0x7f)<<(4+1);
     }
 }
 
@@ -94,7 +140,9 @@ int main(void)
 //    setClock();
     setADC();
     setUart();
+    setGPIO();
     NVIC_EnableIRQ(ADC1_2_IRQn);
+    NVIC_EnableIRQ(USART2_IRQn);
     while(1)
     {
     }
