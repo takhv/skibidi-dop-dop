@@ -18,6 +18,31 @@
 
 /* Global Variable */
 
+void setTimer()
+{
+    RCC->APB2PCENR |= RCC_IOPAEN;
+    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
+    GPIOA->CFGLR &= ~(0b100);
+    GPIOA->CFGLR |= (0b01)|(0b10<<2);
+
+    RCC->APB1PCENR |= RCC_TIM2EN;
+    while((RCC->APB1PCENR & RCC_TIM2EN) != RCC_TIM2EN);
+    TIM2->CHCTLR1 = (0b110<<4);
+    TIM2->PSC = 1-1;
+    TIM2->ATRLR = 256;
+    TIM2->CH1CVR = 64;
+    TIM2->CCER |= 1;
+    TIM2->CTLR1 |= TIM_CEN;
+
+    RCC->APB1PCENR |= RCC_TIM3EN;
+    while((RCC->APB1PCENR & RCC_TIM3EN) != RCC_TIM3EN);
+    TIM3->PSC = 545-1; // PSC 544 + 96CC1/441ATRLR
+    TIM3->ATRLR = 1;
+    TIM3->CTLR1 |= TIM_URS;
+    TIM3->DMAINTENR |= TIM_UIE;
+    TIM3->CTLR1 |= TIM_CEN;
+}
+
 void setGPIO(void)
 {
     RCC->APB2PCENR |= RCC_IOPAEN | RCC_IOPDEN | RCC_AFIOEN;
@@ -196,6 +221,24 @@ void setSPI()
     SPI1->CTLR1 |= SPI_CTLR1_SPE;
 }
 
+uint16_t cur_audio = 0;
+
+__attribute__((interrupt("WCH-Interrupt-fast")))
+void TIM3_IRQHandler(void)
+{
+    TIM2->CH1CVR = buffer[cur_audio++];
+    if(cur_audio == BUFFER_SIZE && w25_state == Read)
+    {
+        SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+        cur_audio %= BUFFER_SIZE;
+    }
+    else
+    {
+        TIM2->CH1CVR = 0;
+    }
+    TIM3->INTFR &= ~1;
+}
+
 /*********************************************************************
  * @fn      main
  *
@@ -206,6 +249,7 @@ void setSPI()
 int main(void)
 {
     setClock();
+    setTimer();
     setADC();
     setUart();
     setGPIO();
