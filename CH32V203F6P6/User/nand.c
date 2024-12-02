@@ -231,7 +231,6 @@ static void SPI_Writer(void)
             }
             else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             {
-                state = ERASED;
                 (void)SPI1->DATAR;
                 SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
@@ -250,7 +249,6 @@ static void SPI_Writer(void)
             }
             else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             {
-                state = ERASED;
                 (void)SPI1->DATAR;
                 SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
