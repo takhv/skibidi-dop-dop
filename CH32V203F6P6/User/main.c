@@ -2,7 +2,7 @@
  * File Name          : main.c
  * Author             : Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel
  * Version            : V1.0.0
- * Date               : 28.11.2024
+ * Date               : 02.12.2024
  * Description        : Main program body.
  *********************************************************************************
  * Copyright (c) Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel.
@@ -11,6 +11,7 @@
  *******************************************************************************/
 
 #include "ch32v20x.h"
+#include "nand.h"
 /* Global typedef */
 
 /* Global define */
@@ -104,16 +105,57 @@ void ADC1_2_IRQHandler(void)
     updateRotationServo(r2);
 }
 
+static uint32_t counter = 0;
+
+extern enum W25_State w25_state;
+extern enum State state;
+extern uint8_t buffer[BUFFER_SIZE];
+extern uint32_t address;
+
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
-    if(USART2->STATR & USART_STATR_RXNE)
+    switch(counter)
     {
-        uint8_t data = USART2->DATAR;
-        if(data & 0x80)
-            potentialForRotation = (data&0x7f)<<(4+1);
+    case 0:
+        if(USART2->DATAR == 0xaa)
+        {
+            counter = 1;
+            USART2->DATAR = 0xaa;
+        }
+        if(USART2->DATAR == 0x87)
+            state = FREE;
+        break;
+    case 1:
+        if(USART2->DATAR == 0x69)
+        {
+            counter = 2;
+            SPI1->CTLR2 &= ~(SPI_CTLR2_RXNEIE | SPI_CTLR2_TXEIE);
+            w25_state = Write;
+            USART2->DATAR = 0x96;
+        }
         else
-            potentialForHead = (data&0x7f)<<(4+1);
+            counter = 0;
+        break;
+    case 2:
+        address = 0;
+    case 3:
+    case 4:
+        address |= (USART2->DATAR << ((2-(counter-2))*8));
+        counter++;
+        break;
+    default:
+        if(counter - 4 < PAGE_SIZE)
+        {
+            buffer[counter-4] = USART2->DATAR;
+            counter++;
+        }
+        else
+        {
+            counter=0;
+            SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+        }
+        break;
     }
 }
 
@@ -128,6 +170,32 @@ void setClock()
     while((RCC->CFGR0 & (2)) != (2));
 }
 
+void setSPI()
+{
+    RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
+    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0 | GPIO_CFGLR_MODE4_1; //PA4 out 50MHz
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
+    GPIOA->BSHR = GPIO_BSHR_BS4;
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF5;
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE5_0;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF5_1;//SCK alternate push-pull output
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF6;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF6_1;//MISO alternate pull-up input
+
+    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF7;
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE7_0;
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF7_1;//MOSI alternate push-pull output
+
+    RCC->APB2PCENR |= RCC_SPI1EN;
+
+    SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM | SPI_CTLR1_SSI;
+    SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+    SPI1->CTLR1 |= SPI_CTLR1_SPE;
+}
+
 /*********************************************************************
  * @fn      main
  *
@@ -137,12 +205,14 @@ void setClock()
  */
 int main(void)
 {
-//    setClock();
+    setClock();
     setADC();
     setUart();
     setGPIO();
+    setSPI();
     NVIC_EnableIRQ(ADC1_2_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
+    NVIC_EnableIRQ(SPI1_IRQn);
     while(1)
     {
     }
