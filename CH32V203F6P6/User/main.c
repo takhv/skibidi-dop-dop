@@ -11,6 +11,8 @@
  *******************************************************************************/
 
 #include "ch32v20x.h"
+#include <stdlib.h>
+#include <time.h>
 /* Global typedef */
 
 /* Global define */
@@ -64,6 +66,10 @@ void setUart()
 int16_t potentialForHead = 0;
 int16_t potentialForRotation = 0;
 #define ADC_MAX (0xfff)
+
+void hugeHorseDickhead(){
+    potentialForHead = (rand() % 21) - 10;
+}
 
 void updateHeadServo(int16_t potential)
 {
@@ -137,6 +143,7 @@ void setClock()
  */
 int main(void)
 {
+    srand(time(NULL));
 //    setClock();
     setADC();
     setUart();
