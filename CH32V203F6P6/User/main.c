@@ -12,6 +12,8 @@
 
 #include "ch32v20x.h"
 #include "nand.h"
+#include <stdlib.h>
+
 /* Global typedef */
 
 /* Global define */
@@ -63,7 +65,7 @@ void setADC(void)
     while(!(RCC->APB2PCENR & RCC_ADC1EN));
     ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN | ADC_JAUTO;
     ADC1->CTLR2 |= ADC_CONT;
-    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // §á§â§Ú§Ö§Þ §Õ§Ñ§ß§ß§í§ç §ã §Õ§Ó§å§ç §Ü§Ñ§ß§Ñ§Ý§à§Ó: 1 §Ú 9 (PA1 §Ú PB1)
+    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // æ‰­æŠŠæˆ‘å¿«æŠ€ å¿±å¿˜æ‰¶æ‰¶æŠ‘æŠ’ æ‰¼ å¿±å¿—æ‰¹æŠ’ æŠ—å¿˜æ‰¶å¿˜æŠ–æŠ‰å¿—: 1 æˆ‘ 9 (PA1 æˆ‘ PB1)
     ADC1->CTLR2 |= ADC_JSWSTART;
     ADC1->CTLR2 |= ADC_ADON;
     for(int i = 0;i<10000;i++);
@@ -75,12 +77,12 @@ void setUart()
     RCC->APB2PCENR |= RCC_IOPAEN;
     while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF3;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF3_1; // §±§Ú§ß PA3 §Õ§Ý§ñ UART Rx
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF3_1; // å¦¤æˆ‘æ‰¶ PA3 å¿±æŠ–æ”¸ UART Rx
 
     GPIOA->CFGLR |= ~GPIO_CFGLR_MODE2;
     GPIOA->CFGLR |= GPIO_CFGLR_MODE2_0;
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF2;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF2_1; // §±§Ú§ß PA2 §Õ§Ý§ñ UART Tx
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF2_1; // å¦¤æˆ‘æ‰¶ PA2 å¿±æŠ–æ”¸ UART Tx
 
     RCC->APB1PCENR |= RCC_USART2EN;
     USART2->BRR = 8000000/115200;
@@ -90,6 +92,10 @@ void setUart()
 int16_t potentialForHead = 0;
 int16_t potentialForRotation = 0;
 #define ADC_MAX (0xfff)
+
+void hugeHorseDickhead(){
+    potentialForHead = (rand() % 21) - 10;
+}
 
 void updateHeadServo(int16_t potential)
 {
