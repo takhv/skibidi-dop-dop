@@ -91,8 +91,8 @@ void setUart()
     USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RE | USART_CTLR1_RXNEIE;
 }
 
-int16_t potentialForHead = 0x00;
-int16_t potentialForRotation = 0;
+int16_t potentialForHead = 0x0;
+int16_t potentialForRotation = 0x800;
 #define ADC_MAX (0xfff)
 
 void hugeHorseDickhead(){
@@ -106,7 +106,7 @@ void updateHeadServo(int16_t potential)
         GPIOA->BSHR = GPIO_BSHR_BR11;
         GPIOA->BSHR = GPIO_BSHR_BS12;
     }
-    else
+    else if((ADC_MAX - potential) + potentialForHead > (unsigned)(potential - potentialForHead))
     {
         GPIOA->BSHR = GPIO_BSHR_BR12;
         GPIOA->BSHR = GPIO_BSHR_BS11;
@@ -117,13 +117,13 @@ void updateRotationServo(int16_t potential)
 {
     if((ADC_MAX - potential) + potentialForRotation < (unsigned)(potential - potentialForRotation))
     {
-        GPIOD->BSHR = GPIO_BSHR_BR1;
-        GPIOD->BSHR = GPIO_BSHR_BS0;
-    }
-    else
-    {
         GPIOD->BSHR = GPIO_BSHR_BR0;
         GPIOD->BSHR = GPIO_BSHR_BS1;
+    }
+    else if((ADC_MAX - potential) + potentialForRotation > (unsigned)(potential - potentialForRotation))
+    {
+        GPIOD->BSHR = GPIO_BSHR_BR1;
+        GPIOD->BSHR = GPIO_BSHR_BS0;
     }
 }
 
@@ -135,8 +135,7 @@ void ADC1_2_IRQHandler(void)
     int16_t r2 = ADC1->IDATAR2;
     ADC1->STATR &= ~(ADC_EOC | ADC_JEOC);
     updateHeadServo(r1);
-    (void)r2;
-//    updateRotationServo(r2);
+    updateRotationServo(r2);
 }
 
 static uint32_t counter = 0;
