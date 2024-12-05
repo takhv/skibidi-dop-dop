@@ -38,7 +38,7 @@ void setTimer()
 
     RCC->APB1PCENR |= RCC_TIM3EN;
     while((RCC->APB1PCENR & RCC_TIM3EN) != RCC_TIM3EN);
-    TIM3->PSC = 545-1; // PSC 544 + 96CC1/441ATRLR
+    TIM3->PSC = 545-1; // PSC 544
     TIM3->ATRLR = 1;
     TIM3->CTLR1 |= TIM_URS;
     TIM3->DMAINTENR |= TIM_UIE;
@@ -67,7 +67,7 @@ void setADC(void)
     while(!(RCC->APB2PCENR & RCC_ADC1EN));
     ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN | ADC_JAUTO;
     ADC1->CTLR2 |= ADC_CONT;
-    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // 扭把我快技 忱忘扶扶抑抒 扼 忱志批抒 抗忘扶忘抖抉志: 1 我 9 (PA1 我 PB1)
+    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // Use ADC for 1st and 9th channels (PA1 and PB1)
     ADC1->CTLR2 |= ADC_JSWSTART;
     ADC1->CTLR2 |= ADC_ADON;
     for(int i = 0;i<10000;i++);
@@ -79,12 +79,12 @@ void setUart()
     RCC->APB2PCENR |= RCC_IOPAEN;
     while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF3;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF3_1; // 妤我扶 PA3 忱抖攸 UART Rx
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF3_1; // use PA3 as UART Rx
 
     GPIOA->CFGLR |= ~GPIO_CFGLR_MODE2;
     GPIOA->CFGLR |= GPIO_CFGLR_MODE2_0;
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF2;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF2_1; // 妤我扶 PA2 忱抖攸 UART Tx
+    GPIOA->CFGLR |= GPIO_CFGLR_CNF2_1; // use PA2 as UART Tx
 
     RCC->APB1PCENR |= RCC_USART2EN;
     USART2->BRR = 8000000/115200;
@@ -148,47 +148,50 @@ extern uint32_t address;
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
-    switch(counter)
+    if(USART2->STATR & USART_STATR_RXNE)
     {
-    case 0:
-        if(USART2->DATAR == 0xaa)
+        switch(counter)
         {
-            counter = 1;
-            USART2->DATAR = 0xaa;
-        }
-        if(USART2->DATAR == 0x87)
-            state = FREE;
-        break;
-    case 1:
-        if(USART2->DATAR == 0x69)
-        {
-            counter = 2;
-            SPI1->CTLR2 &= ~(SPI_CTLR2_RXNEIE | SPI_CTLR2_TXEIE);
-            w25_state = Write;
-            USART2->DATAR = 0x96;
-        }
-        else
-            counter = 0;
-        break;
-    case 2:
-        address = 0;
-    case 3:
-    case 4:
-        address |= (USART2->DATAR << ((2-(counter-2))*8));
-        counter++;
-        break;
-    default:
-        if(counter - 4 < PAGE_SIZE)
-        {
-            buffer[counter-4] = USART2->DATAR;
+        case 0:
+            if(USART2->DATAR == 0xaa)
+            {
+                counter = 1;
+                USART2->DATAR = 0xaa;
+            }
+            if(USART2->DATAR == 0x87)
+                state = FREE;
+            break;
+        case 1:
+            if(USART2->DATAR == 0x69)
+            {
+                counter = 2;
+                SPI1->CTLR2 &= ~(SPI_CTLR2_RXNEIE | SPI_CTLR2_TXEIE);
+                w25_state = Write;
+                USART2->DATAR = 0x96;
+            }
+            else
+                counter = 0;
+            break;
+        case 2:
+            address = 0;
+        case 3:
+        case 4:
+            address |= (USART2->DATAR << ((2-(counter-2))*8));
             counter++;
+            break;
+        default:
+            if(counter - 4 < PAGE_SIZE)
+            {
+                buffer[counter-4] = USART2->DATAR;
+                counter++;
+            }
+            else
+            {
+                counter=0;
+                SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+            }
+            break;
         }
-        else
-        {
-            counter=0;
-            SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
-        }
-        break;
     }
 }
 
@@ -207,7 +210,7 @@ void setSPI()
 {
     RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
     while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0 | GPIO_CFGLR_MODE4_1; //PA4 out 50MHz
+    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0; //PA4 out 10MHz
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
     GPIOA->BSHR = GPIO_BSHR_BS4;
 
@@ -225,7 +228,7 @@ void setSPI()
     RCC->APB2PCENR |= RCC_SPI1EN;
 
     SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM | SPI_CTLR1_SSI;
-    SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
+    SPI1->CTLR2 |= SPI_CTLR2_TXEIE | SPI_CTLR2_SSOE;
     SPI1->CTLR1 |= SPI_CTLR1_SPE;
 }
 
