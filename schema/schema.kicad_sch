@@ -5708,7 +5708,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "200Ohm"
+		(property "Value" "1kOhm"
 			(at 96.5199 26.67 0)
 			(effects
 				(font
