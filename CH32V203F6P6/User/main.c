@@ -1,11 +1,11 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : main.c
- * Author             : Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel
+ * Author             : Kozodoy Andrey, Tsalov Vasiliy, Mikhaylov Pavel, Takhvatulin Mikhail and Schetinin Stanislav.
  * Version            : V1.0.0
  * Date               : 02.12.2024
  * Description        : Main program body.
  *********************************************************************************
- * Copyright (c) Kozodoy Andrey, Takhvatulin Mikhail, Schetinin Stanislav and Mikhaylov Pavel.
+ * Copyright (c) Kozodoy Andrey, Tsalov Vasiliy, Mikhaylov Pavel, Takhvatulin Mikhail and Schetinin Stanislav.
  * Attention: This software (modified or not) and binary are used for 
  * microcontroller ch32
  *******************************************************************************/
@@ -59,6 +59,8 @@ void setGPIO(void)
 void setADC(void)
 {
     RCC->CFGR0 &= ~RCC_ADCPRE;
+    RCC->CFGR0 |= RCC_ADCPRE_0;
+
     RCC->APB2PCENR |= RCC_ADC1EN | RCC_IOPAEN | RCC_IOPBEN;
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF1;
     GPIOB->CFGLR &= ~GPIO_CFGLR_CNF1;
@@ -89,7 +91,7 @@ void setUart()
     USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RE | USART_CTLR1_RXNEIE;
 }
 
-int16_t potentialForHead = 0;
+int16_t potentialForHead = 0x00;
 int16_t potentialForRotation = 0;
 #define ADC_MAX (0xfff)
 
@@ -99,7 +101,7 @@ void hugeHorseDickhead(){
 
 void updateHeadServo(int16_t potential)
 {
-    if((ADC_MAX - potential) + potentialForHead < potential - potentialForHead)
+    if((ADC_MAX - potential) + potentialForHead < (unsigned)(potential - potentialForHead))
     {
         GPIOA->BSHR = GPIO_BSHR_BR11;
         GPIOA->BSHR = GPIO_BSHR_BS12;
@@ -113,7 +115,7 @@ void updateHeadServo(int16_t potential)
 
 void updateRotationServo(int16_t potential)
 {
-    if((ADC_MAX - potential) + potentialForRotation < potential - potentialForRotation)
+    if((ADC_MAX - potential) + potentialForRotation < (unsigned)(potential - potentialForRotation))
     {
         GPIOD->BSHR = GPIO_BSHR_BR1;
         GPIOD->BSHR = GPIO_BSHR_BS0;
@@ -133,7 +135,8 @@ void ADC1_2_IRQHandler(void)
     int16_t r2 = ADC1->IDATAR2;
     ADC1->STATR &= ~(ADC_EOC | ADC_JEOC);
     updateHeadServo(r1);
-    updateRotationServo(r2);
+    (void)r2;
+//    updateRotationServo(r2);
 }
 
 static uint32_t counter = 0;
