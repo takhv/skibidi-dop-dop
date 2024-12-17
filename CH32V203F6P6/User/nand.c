@@ -35,14 +35,14 @@ static void Reset_W25Q(void)
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            (void)SPI1->DATAR;
-            SPI1->DATAR = ENABLE_RESET_COMMAND;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            *((__IO uint8_t*)(&SPI1->DATAR)) = ENABLE_RESET_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
         else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
-            (void)SPI1->DATAR;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
             GPIOA->BSHR = GPIO_BSHR_BS4;
             state = DEVICE_RESET;
             SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
@@ -53,14 +53,14 @@ static void Reset_W25Q(void)
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            (void)SPI1->DATAR;
-            SPI1->DATAR = RESET_DEVICE_COMMAND;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            *((__IO uint8_t*)(&SPI1->DATAR)) = RESET_DEVICE_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
         else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
-            (void)SPI1->DATAR;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
             GPIOA->BSHR = GPIO_BSHR_BS4;
             state = SEND_READ_JEDEC;
             SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
@@ -71,40 +71,43 @@ static void Reset_W25Q(void)
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            (void)SPI1->DATAR;
-            SPI1->DATAR = JEDEC_ID_COMMAND;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            *((__IO uint8_t*)(&SPI1->DATAR)) = JEDEC_ID_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
         else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             state = ACCEPT_JEDEC_ID;
-            (void)SPI1->DATAR;
-            SPI1->DATAR = 0xFF;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            *((__IO uint8_t*)(&SPI1->DATAR)) = 0xFF;
         }
         break;
     case ACCEPT_JEDEC_ID:
         if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
-            if(SPI1->DATAR != JEDEC_ID)
+        {
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            if(data != JEDEC_ID)
                 W25Q_Error_Handler();
             else
             {
                 state = ACCEPT_ID2;
-                SPI1->DATAR = 0xFF;
+                *((__IO uint8_t*)(&SPI1->DATAR)) = 0xFF;
             }
+        }
         break;
     case ACCEPT_ID1:
         if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
-            (void)SPI1->DATAR;
-            SPI1->DATAR = 0xFF;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
+            *((__IO uint8_t*)(&SPI1->DATAR)) = 0xFF;
             state = ACCEPT_ID2;
         }
         break;
     case ACCEPT_ID2:
         if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
-            (void)SPI1->DATAR;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
             state = FREE;
             SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
             SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
@@ -133,7 +136,7 @@ static void SPI_Reader(void)
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
             counter=0;
-            SPI1->DATAR = READ_COMMAND;
+            *((__IO uint8_t*)(&SPI1->DATAR)) = READ_COMMAND;
             state = SEND_ADDRESS;
             address_counter = 0;
         }
@@ -141,11 +144,11 @@ static void SPI_Reader(void)
     case SEND_ADDRESS:
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
-            SPI1->DATAR = (address>>(8*(address_counter++))) & 0xFF;
+            *((__IO uint8_t*)(&SPI1->DATAR)) = (address>>(8*(address_counter++))) & 0xFF;
             if(address_counter == 3)
             {
                 state = READ_DATA;
-                (void)SPI1->DATAR;
+                uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
                 SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
                 SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             }
@@ -154,7 +157,7 @@ static void SPI_Reader(void)
     case READ_DATA:
         if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
-            buffer[counter++] = SPI1->DATAR;
+            buffer[counter++] = *((__IO uint8_t*)(&SPI1->DATAR));
             if(counter == BUFFER_SIZE)
             {
                 state = FREE;
@@ -162,7 +165,7 @@ static void SPI_Reader(void)
                 GPIOA->BSHR = GPIO_BSHR_BS4;
             }
             else
-                SPI1->DATAR = 0xff;
+                *((__IO uint8_t*)(&SPI1->DATAR)) = 0xff;
         }
         break;
     default:
@@ -187,14 +190,14 @@ static void SPI_Writer(void)
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            SPI1->DATAR = WRITE_ENABLE_COMMAND;
+            *((__IO uint8_t*)(&SPI1->DATAR)) = WRITE_ENABLE_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
         else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             state = SEND_WRITE_ENABLE;
-            (void)SPI1->DATAR;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
             GPIOA->BSHR = GPIO_BSHR_BS4;
             SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
             SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
@@ -204,14 +207,14 @@ static void SPI_Writer(void)
         if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
         {
             GPIOA->BSHR = GPIO_BSHR_BR4;
-            SPI1->DATAR = CHIP_ERASE_COMMAND;
+            *((__IO uint8_t*)(&SPI1->DATAR)) = CHIP_ERASE_COMMAND;
             SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
             SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
         }
         else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
         {
             state = ERASED;
-            (void)SPI1->DATAR;
+            uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
             GPIOA->BSHR = GPIO_BSHR_BS4;
             SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
             SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
@@ -225,13 +228,13 @@ static void SPI_Writer(void)
             if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
             {
                 GPIOA->BSHR = GPIO_BSHR_BR4;
-                SPI1->DATAR = PAGE_PROGRAM_COMMAND;
+                *((__IO uint8_t*)(&SPI1->DATAR)) = PAGE_PROGRAM_COMMAND;
                 SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
             }
             else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             {
-                (void)SPI1->DATAR;
+                uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
                 SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
                 counter=1;
@@ -243,13 +246,13 @@ static void SPI_Writer(void)
         case 3:
             if((SPI1->STATR & SPI_STATR_TXE) && (SPI1->CTLR2 & SPI_CTLR2_TXEIE))
             {
-                SPI1->DATAR = (address >> ((2-address_counter)*8))&0xff;
+                *((__IO uint8_t*)(&SPI1->DATAR)) = (address >> ((2-address_counter)*8))&0xff;
                 SPI1->CTLR2 &= ~SPI_CTLR2_TXEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_RXNEIE;
             }
             else if((SPI1->STATR & SPI_STATR_RXNE) && (SPI1->CTLR2 & SPI_CTLR2_RXNEIE))
             {
-                (void)SPI1->DATAR;
+                uint8_t data = *((__IO uint8_t*)(&SPI1->DATAR));
                 SPI1->CTLR2 &= ~SPI_CTLR2_RXNEIE;
                 SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
                 counter++;
@@ -264,7 +267,7 @@ static void SPI_Writer(void)
             GPIOA->BSHR = GPIO_BSHR_BS4;
             break;
         default:
-            SPI1->DATAR = buffer[(counter++)-4];
+            *((__IO uint8_t*)(&SPI1->DATAR)) = buffer[(counter++)-4];
             break;
         }
         break;
