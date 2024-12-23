@@ -20,6 +20,9 @@
 
 /* Global Variable */
 
+extern const uint8_t binary_skibidi_audio[];
+extern const uint32_t binary_skibidi_size;
+
 void setTimer()
 {
     RCC->APB2PCENR |= RCC_IOPAEN;
@@ -99,37 +102,74 @@ void setUart()
 
 int16_t potentialForHead = 0x0;
 int16_t potentialForRotation = 0x800;
+#define potentialMaxError (0x50)
 #define ADC_MAX (0xfff)
 
+#define MAX_ROTATION_ANGLE_IN_LSB (455)
+#define MAX_HEAD_ANGLE_IN_LSB (1365)
+#define HEAD_ANGLE_BASE (4096/4)
+
 void hugeHorseDickhead(){
-    potentialForHead = (rand() % 21) - 10;
+    potentialForRotation = (rand() % (2*MAX_ROTATION_ANGLE_IN_LSB+1)) - MAX_ROTATION_ANGLE_IN_LSB;
+}
+
+void headLogic() {
+    if(potentialForHead != MAX_HEAD_ANGLE_IN_LSB)
+        potentialForHead = (HEAD_ANGLE_BASE + MAX_HEAD_ANGLE_IN_LSB) % 4096;
+    else
+        potentialForHead = ((uint16_t)(HEAD_ANGLE_BASE-MAX_HEAD_ANGLE_IN_LSB)) % 4096;
+}
+
+uint16_t min(uint16_t a, uint16_t b)
+{
+    return (a>b)?b:a;
 }
 
 void updateHeadServo(int16_t potential)
 {
-    if((ADC_MAX - potential) + potentialForHead < (unsigned)(potential - potentialForHead))
+    uint16_t dist_right = (ADC_MAX - potential) + potentialForHead;
+    uint16_t dist_left = (unsigned)(potential - potentialForHead);
+    if(min(dist_left, dist_right) < potentialMaxError)
     {
         GPIOA->BSHR = GPIO_BSHR_BR11;
-        GPIOA->BSHR = GPIO_BSHR_BS12;
-    }
-    else if((ADC_MAX - potential) + potentialForHead > (unsigned)(potential - potentialForHead))
-    {
         GPIOA->BSHR = GPIO_BSHR_BR12;
-        GPIOA->BSHR = GPIO_BSHR_BS11;
+    }
+    else
+    {
+        if(dist_right < dist_left)
+        {
+            GPIOA->BSHR = GPIO_BSHR_BR11;
+            GPIOA->BSHR = GPIO_BSHR_BS12;
+        }
+        else
+        {
+            GPIOA->BSHR = GPIO_BSHR_BR12;
+            GPIOA->BSHR = GPIO_BSHR_BS11;
+        }
     }
 }
 
 void updateRotationServo(int16_t potential)
 {
-    if((ADC_MAX - potential) + potentialForRotation < (unsigned)(potential - potentialForRotation))
+    uint16_t dist_right = (ADC_MAX - potential) + potentialForRotation;
+    uint16_t dist_left = (unsigned)(potential - potentialForRotation);
+    if(min(dist_left, dist_right) < potentialMaxError)
     {
         GPIOD->BSHR = GPIO_BSHR_BR0;
-        GPIOD->BSHR = GPIO_BSHR_BS1;
-    }
-    else if((ADC_MAX - potential) + potentialForRotation > (unsigned)(potential - potentialForRotation))
-    {
         GPIOD->BSHR = GPIO_BSHR_BR1;
-        GPIOD->BSHR = GPIO_BSHR_BS0;
+    }
+    else
+    {
+        if(dist_right < dist_left)
+        {
+            GPIOD->BSHR = GPIO_BSHR_BR0;
+            GPIOD->BSHR = GPIO_BSHR_BS1;
+        }
+        else
+        {
+            GPIOD->BSHR = GPIO_BSHR_BR1;
+            GPIOD->BSHR = GPIO_BSHR_BS0;
+        }
     }
 }
 
@@ -144,13 +184,6 @@ void ADC1_2_IRQHandler(void)
     updateRotationServo(r2);
 }
 
-static uint32_t counter = 0;
-
-extern enum W25_State w25_state;
-extern enum State state;
-extern uint8_t buffer[BUFFER_SIZE];
-extern uint32_t address;
-
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void USART2_IRQHandler(void)
 {
@@ -159,48 +192,6 @@ void USART2_IRQHandler(void)
         uint8_t data = USART2->DATAR;
         USART2->DATAR = data;
         TIM2->CH1CVR = data;
-//        switch(counter)
-//        {
-//        case 0:
-//            if(data == 0xaa)
-//            {
-//                counter = 1;
-//                USART2->DATAR = 0xaa;
-//            }
-//            if(data == 0x87)
-//                state = FREE;
-//            break;
-//        case 1:
-//            if(data == 0x69)
-//            {
-//                counter = 2;
-//                SPI1->CTLR2 &= ~(SPI_CTLR2_RXNEIE | SPI_CTLR2_TXEIE);
-//                w25_state = Write;
-//                USART2->DATAR = 0x96;
-//            }
-//            else
-//                counter = 0;
-//            break;
-//        case 2:
-//            address = 0;
-//        case 3:
-//        case 4:
-//            address |= (data << ((2-(counter-2))*8));
-//            counter++;
-//            break;
-//        default:
-//            if(counter - 4 < PAGE_SIZE)
-//            {
-//                buffer[counter-4] = data;
-//                counter++;
-//            }
-//            else
-//            {
-//                counter=0;
-//                SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
-//            }
-//            break;
-//        }
     }
 }
 
@@ -215,47 +206,18 @@ void setClock()
     while((RCC->CFGR0 & (2)) != (2));
 }
 
-void setSPI()
-{
-    RCC->APB2PCENR |= RCC_IOPAEN;//PA enable
-    while((RCC->APB2PCENR & RCC_IOPAEN) != RCC_IOPAEN);
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0; //PA4 out 10MHz
-    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
-    GPIOA->BSHR = GPIO_BSHR_BS4;
-
-    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF5;
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE5_0;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF5_1;//SCK alternate push-pull output
-
-    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF6;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF6_1;//MISO alternate pull-up input
-
-    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF7;
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE7_0;
-    GPIOA->CFGLR |= GPIO_CFGLR_CNF7_1;//MOSI alternate push-pull output
-
-    RCC->APB2PCENR |= RCC_SPI1EN;
-
-    SPI1->CTLR1 |= SPI_CTLR1_MSTR | SPI_CTLR1_SSM | SPI_CTLR1_SSI;
-    SPI1->CTLR2 |= SPI_CTLR2_TXEIE | SPI_CTLR2_SSOE;
-    SPI1->CTLR1 |= SPI_CTLR1_SPE;
-}
-
 uint16_t cur_audio = 0;
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void TIM3_IRQHandler(void)
 {
-//    TIM2->CH1CVR = buffer[cur_audio++];
-//    if(cur_audio == BUFFER_SIZE && w25_state == Read)
-//    {
-//        SPI1->CTLR2 |= SPI_CTLR2_TXEIE;
-//        cur_audio %= BUFFER_SIZE;
-//    }
-//    else
-//    {
-//        TIM2->CH1CVR = 0;
-//    }
+    TIM2->CH1CVR = binary_skibidi_audio[cur_audio++];
+    if(cur_audio == binary_skibidi_size)
+        cur_audio = 0;
+    if(cur_audio % 100 == 0)
+        hugeHorseDickhead();
+    if(cur_audio % 1000 == 0)
+        headLogic();
     TIM3->INTFR &= ~1;
 }
 
@@ -273,11 +235,6 @@ int main(void)
     setADC();
     setUart();
     setGPIO();
-//    setSPI();
-//    RCC->APB2PCENR |= RCC_IOPAEN;
-//    GPIOA->CFGLR |= GPIO_CFGLR_MODE4_0; //PA4 out 10MHz
-//    GPIOA->CFGLR &= ~GPIO_CFGLR_CNF4; //PA4 push-pull
-//    GPIOA->BSHR = GPIO_BSHR_BR4;
     NVIC_EnableIRQ(ADC1_2_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
     while(1)
