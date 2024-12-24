@@ -100,18 +100,18 @@ void setUart()
     USART2->CTLR1 |= USART_CTLR1_UE | USART_CTLR1_RE | USART_CTLR1_RXNEIE | USART_CTLR1_TE;
 }
 
-#define potentialMaxError (100)
+#define potentialMaxError (50)
 #define ADC_MAX (0xfff)
 
-#define MAX_ROTATION_ANGLE_IN_LSB (455)
+#define MAX_ROTATION_ANGLE_IN_LSB (113)
 #define MAX_HEAD_ANGLE_IN_LSB (341)
 #define HEAD_ANGLE_BASE (0xc00)
 
 uint16_t potentialForHead = HEAD_ANGLE_BASE;
-uint16_t potentialForRotation = 0x800;
+uint16_t potentialForRotation = 0;
 
 void hugeHorseDickhead(){
-    potentialForRotation = (rand() % (2*MAX_ROTATION_ANGLE_IN_LSB+1)) - MAX_ROTATION_ANGLE_IN_LSB;
+    potentialForRotation = ((uint16_t)((rand() % (2*MAX_ROTATION_ANGLE_IN_LSB+1)) - MAX_ROTATION_ANGLE_IN_LSB))&0xfff;
 }
 
 void headLogic() {
@@ -128,8 +128,8 @@ uint16_t min(uint16_t a, uint16_t b)
 
 void updateHeadServo(uint16_t potential)
 {
-    uint16_t dist_right = (ADC_MAX - potential) + potentialForHead;
-    uint16_t dist_left = (unsigned)(potential - potentialForHead);
+    uint16_t dist_right = ((ADC_MAX - potential) + potentialForHead)&0xfff;
+    uint16_t dist_left = ((unsigned)(potential - potentialForHead))&0xfff;
     if(min(dist_left, dist_right) < potentialMaxError)
     {
         GPIOA->BSHR = GPIO_BSHR_BR11 | GPIO_BSHR_BR12;
@@ -151,8 +151,8 @@ void updateHeadServo(uint16_t potential)
 
 void updateRotationServo(uint16_t potential)
 {
-    uint16_t dist_right = (ADC_MAX - potential) + potentialForRotation;
-    uint16_t dist_left = (unsigned)(potential - potentialForRotation);
+    uint16_t dist_right = ((ADC_MAX - potential) + potentialForRotation)&0xfff;
+    uint16_t dist_left = ((unsigned)(potential - potentialForRotation)) & 0xfff;
     if(min(dist_left, dist_right) < potentialMaxError)
     {
         GPIOD->BSHR = GPIO_BSHR_BR0 | GPIO_BSHR_BR1;
@@ -180,7 +180,7 @@ void ADC1_2_IRQHandler(void)
     uint16_t r2 = ADC1->IDATAR2;
     ADC1->STATR = 0;
     updateHeadServo(r1);
-//    updateRotationServo(r2);
+    updateRotationServo(r2);
 }
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
@@ -220,8 +220,8 @@ void TIM3_IRQHandler(void)
             headLogic();
         }
     }
-//    if(cur_audio % 10000 == 0)
-//        hugeHorseDickhead();
+    if(cur_audio % 10000 == 0)
+        hugeHorseDickhead();
     TIM3->INTFR &= ~1;
 }
 
@@ -237,10 +237,10 @@ int main(void)
     setClock();
     setTimer();
     setADC();
-    setUart();
+//    setUart();
     setGPIO();
     NVIC_EnableIRQ(ADC1_2_IRQn);
-    NVIC_EnableIRQ(USART2_IRQn);
+//    NVIC_EnableIRQ(USART2_IRQn);
     NVIC_EnableIRQ(TIM3_IRQn);
     while(1)
     {
