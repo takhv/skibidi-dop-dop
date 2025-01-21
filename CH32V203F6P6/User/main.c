@@ -45,9 +45,6 @@ void setTimer()
     TIM3->ATRLR = 2172;
     TIM3->CTLR1 |= TIM_URS;
     TIM3->DMAINTENR |= TIM_UIE;
-    TIM3->CHCTLR1 = TIM_OC1M_2 | TIM_OC1M_1;
-    TIM3->CCER |= 1;
-    TIM3->CH1CVR = 0;
     TIM3->CTLR1 |= TIM_CEN;
 }
 
@@ -56,13 +53,6 @@ void setGPIO(void)
     RCC->APB2PCENR |= RCC_IOPAEN | RCC_IOPDEN | RCC_AFIOEN;
     GPIOA->CFGHR &= ~(GPIO_CFGHR_CNF11 | GPIO_CFGHR_CNF12);
     GPIOA->CFGHR |= GPIO_CFGHR_MODE11_0 | GPIO_CFGHR_MODE12_0;
-
-    GPIOA->CFGLR &= ~(GPIO_CFGLR_MODE6 | GPIO_CFGLR_CNF6);
-    GPIOA->CFGLR |= GPIO_CFGLR_MODE6_0 | GPIO_CFGLR_CNF6_1;
-
-    AFIO->PCFR1 |= AFIO_PCFR1_PD01_REMAP;
-    GPIOD->CFGLR &= ~(GPIO_CFGLR_CNF0 | GPIO_CFGLR_CNF1);
-    GPIOD->CFGLR |= GPIO_CFGLR_MODE0_0 | GPIO_CFGLR_MODE1_0;
 }
 
 void setADC(void)
@@ -72,11 +62,10 @@ void setADC(void)
 
     RCC->APB2PCENR |= RCC_ADC1EN | RCC_IOPAEN | RCC_IOPBEN;
     GPIOA->CFGLR &= ~GPIO_CFGLR_CNF1;
-    GPIOB->CFGLR &= ~GPIO_CFGLR_CNF1;
     while(!(RCC->APB2PCENR & RCC_ADC1EN));
     ADC1->CTLR1 |= ADC_JEOCIE | ADC_SCAN | ADC_JAUTO;
     ADC1->CTLR2 |= ADC_CONT;
-    ADC1->ISQR = ((2-1) << 20) | (1 << 10) | (9<<15); // Use ADC for 1st and 9th channels (PA1 and PB1)
+    ADC1->ISQR = ((1-1) << 20) | (1 << 10); // Use ADC for 1st channel (PA1)
     ADC1->CTLR2 |= ADC_JSWSTART;
     ADC1->CTLR2 |= ADC_ADON;
     for(int i = 0;i<10000;i++);
@@ -108,11 +97,6 @@ void setUart()
 #define HEAD_ANGLE_BASE (0xc00)
 
 uint16_t potentialForHead = HEAD_ANGLE_BASE;
-uint16_t potentialForRotation = 0;
-
-void hugeHorseDickhead(){
-    potentialForRotation = ((uint16_t)((rand() % (2*MAX_ROTATION_ANGLE_IN_LSB+1)) - MAX_ROTATION_ANGLE_IN_LSB))&0xfff;
-}
 
 void headLogic() {
     if(potentialForHead != ((HEAD_ANGLE_BASE + MAX_HEAD_ANGLE_IN_LSB) & 0xfff))
@@ -149,38 +133,13 @@ void updateHeadServo(uint16_t potential)
     }
 }
 
-void updateRotationServo(uint16_t potential)
-{
-    uint16_t dist_right = ((ADC_MAX - potential) + potentialForRotation)&0xfff;
-    uint16_t dist_left = ((unsigned)(potential - potentialForRotation)) & 0xfff;
-    if(min(dist_left, dist_right) < potentialMaxError)
-    {
-        GPIOD->BSHR = GPIO_BSHR_BR0 | GPIO_BSHR_BR1;
-    }
-    else
-    {
-        if(dist_right < dist_left)
-        {
-            GPIOD->BSHR = GPIO_BSHR_BR0;
-            GPIOD->BSHR = GPIO_BSHR_BS1;
-        }
-        else
-        {
-            GPIOD->BSHR = GPIO_BSHR_BR1;
-            GPIOD->BSHR = GPIO_BSHR_BS0;
-        }
-    }
-}
-
 __attribute__((interrupt("WCH-Interrupt-fast")))
 void ADC1_2_IRQHandler(void)
 {
     ADC1->RDATAR;
     uint16_t r1 = ADC1->IDATAR1;
-    uint16_t r2 = ADC1->IDATAR2;
     ADC1->STATR = 0;
     updateHeadServo(r1);
-    updateRotationServo(r2);
 }
 
 __attribute__((interrupt("WCH-Interrupt-fast")))
@@ -220,8 +179,6 @@ void TIM3_IRQHandler(void)
             headLogic();
         }
     }
-    if(cur_audio % 10000 == 0)
-        hugeHorseDickhead();
     TIM3->INTFR &= ~1;
 }
 
